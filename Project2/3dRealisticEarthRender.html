@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Earth</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(ellipse at center, #0a0e2a 0%, #000000 70%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Glassmorphism base */
+        .glass-panel {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 16px;
+            color: white;
+            font-size: 13px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
+        }
+
+        /* Collapsed state */
+        .glass-panel.collapsed {
+            max-height: 48px;
+            padding: 12px 16px;
+            cursor: pointer;
+        }
+
+        /* Expanded state */
+        .glass-panel.expanded {
+            max-height: 500px;
+        }
+
+        /* Toggle button inside panel */
+        .panel-toggle {
+            font-weight: bold;
+            font-size: 14px;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-toggle::after {
+            content: '▼';
+            transition: transform 0.3s ease;
+        }
+
+        .glass-panel.expanded .panel-toggle::after {
+            transform: rotate(180deg);
+        }
+
+        /* Positioning */
+        #info-panel {
+            top: 20px;
+            left: 20px;
+            width: 260px;
+        }
+
+        #controls-panel {
+            bottom: 20px;
+            right: 20px;
+            width: 220px;
+        }
+
+        .control-button {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            margin: 4px 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .control-button.active {
+            background: rgba(0, 150, 255, 0.4);
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+<div id="loading">Loading Earth...</div>
+<div id="canvas-container"></div>
+
+<!-- Info Panel -->
+<div id="info-panel" class="glass-panel collapsed">
+    <div class="panel-toggle" onclick="togglePanel('info-panel')">Earth Controls</div>
+    <div class="panel-content" style="margin-top: 12px;">
+        <p><strong>Rotate:</strong> Left click + drag</p>
+        <p><strong>Zoom:</strong> Scroll</p>
+        <p><strong>Pan:</strong> Right click + drag</p>
+        <p><strong>Click Earth:</strong> Get coordinates</p>
+    </div>
+</div>
+
+<!-- Controls Panel -->
+<div id="controls-panel" class="glass-panel collapsed">
+    <div class="panel-toggle" onclick="togglePanel('controls-panel')">View Options</div>
+    <div class="panel-content" style="margin-top: 12px;">
+        <button id="toggle-clouds" class="control-button active">Clouds</button>
+        <button id="toggle-atmosphere" class="control-button active">Atmosphere</button>
+        <button id="toggle-night" class="control-button">Night Lights</button>
+        <button id="toggle-rotation" class="control-button active">Auto Rotate</button>
+        <br><br>
+        <button id="reset-view" class="control-button">Reset View</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.6;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    camera.position.set(0, 0, 3);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 10;
+    controls.enablePan = true;
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    sunLight.position.set(5, 3, 5);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    scene.add(sunLight);
+
+    // Earth
+    const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
+    const textureLoader = new THREE.TextureLoader();
+
+    function createProceduralTexture(type) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        if (type === 'earth') {
+            const gradient = ctx.createLinearGradient(0, 0, 512, 256);
+            gradient.addColorStop(0, '#4a90e2');
+            gradient.addColorStop(0.3, '#2e7d32');
+            gradient.addColorStop(0.6, '#8bc34a');
+            gradient.addColorStop(1, '#4a90e2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 256);
+            ctx.fillStyle = '#2e7d32';
+            for (let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * 512, Math.random() * 256, Math.random() * 30 + 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (type === 'clouds') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < 50; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * 512, Math.random() * 256, Math.random() * 20 + 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    const earthMaterial = new THREE.MeshPhongMaterial({
+        map: textureLoader.load(
+            'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
+            undefined,
+            undefined,
+            () => {
+                earthMaterial.map = createProceduralTexture('earth');
+                earthMaterial.needsUpdate = true;
+            }
+        ),
+        bumpMap: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg'),
+        bumpScale: 0.05,
+        specularMap: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg'),
+        specular: new THREE.Color('grey'),
+        shininess: 100
+    });
+
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    earth.receiveShadow = true;
+    earth.castShadow = true;
+    scene.add(earth);
+
+    // Clouds
+    const cloudsGeometry = new THREE.SphereGeometry(1.01, 64, 64);
+    const cloudsMaterial = new THREE.MeshPhongMaterial({
+        map: textureLoader.load(
+            'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png',
+            undefined,
+            undefined,
+            () => {
+                cloudsMaterial.map = createProceduralTexture('clouds');
+                cloudsMaterial.needsUpdate = true;
+            }
+        ),
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false
+    });
+    const clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+    scene.add(clouds);
+
+    // Atmosphere
+    const atmosphereGeometry = new THREE.SphereGeometry(1.1, 64, 64);
+    const atmosphereMaterial = new THREE.ShaderMaterial({
+        vertexShader: `
+            varying vec3 vNormal;
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec3 vNormal;
+            void main() {
+                float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
+            }
+        `,
+        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide,
+        transparent: true
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    scene.add(atmosphere);
+
+    // Stars
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsVertices = [];
+    for (let i = 0; i < 20000; i++) {
+        const x = (Math.random() - 0.5) * 2000;
+        const y = (Math.random() - 0.5) * 2000;
+        const z = (Math.random() - 0.5) * 2000;
+        starsVertices.push(x, y, z);
+    }
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 2 });
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+
+    // Raycaster for click
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onMouseClick(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(earth);
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+            const lat = Math.asin(point.y / point.length()) * 180 / Math.PI;
+            const lon = Math.atan2(point.x, point.z) * 180 / Math.PI;
+            alert(`📍 Location:\nLatitude: ${lat.toFixed(2)}°\nLongitude: ${lon.toFixed(2)}°`);
+        }
+    }
+
+    renderer.domElement.addEventListener('click', onMouseClick);
+
+    // Toggle controls
+    let showClouds = true, showAtmosphere = true, autoRotate = true, showNightLights = false;
+
+    document.getElementById('toggle-clouds').addEventListener('click', function () {
+        showClouds = !showClouds;
+        clouds.visible = showClouds;
+        this.classList.toggle('active');
+    });
+
+    document.getElementById('toggle-atmosphere').addEventListener('click', function () {
+        showAtmosphere = !showAtmosphere;
+        atmosphere.visible = showAtmosphere;
+        this.classList.toggle('active');
+    });
+
+    document.getElementById('toggle-rotation').addEventListener('click', function () {
+        autoRotate = !autoRotate;
+        this.classList.toggle('active');
+    });
+
+    document.getElementById('toggle-night').addEventListener('click', function () {
+        showNightLights = !showNightLights;
+        if (showNightLights) {
+            earthMaterial.emissiveMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png');
+            earthMaterial.emissive = new THREE.Color(0xffff88);
+            earthMaterial.emissiveIntensity = 0.3;
+        } else {
+            earthMaterial.emissiveMap = null;
+            earthMaterial.emissive = new THREE.Color(0x000000);
+            earthMaterial.emissiveIntensity = 0;
+        }
+        earthMaterial.needsUpdate = true;
+        this.classList.toggle('active');
+    });
+
+    document.getElementById('reset-view').addEventListener('click', function () {
+        camera.position.set(0, 0, 3);
+        controls.reset();
+    });
+
+    // Panel toggle
+    function togglePanel(id) {
+        const panel = document.getElementById(id);
+        panel.classList.toggle('collapsed');
+        panel.classList.toggle('expanded');
+    }
+
+    // Animation
+    function animate() {
+        requestAnimationFrame(animate);
+        if (autoRotate) {
+            earth.rotation.y += 0.002;
+            clouds.rotation.y += 0.0025;
+        }
+        stars.rotation.y += 0.0001;
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Hide loading
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+    }, 1000);
+
+    animate();
+</script>
+</body>
+</html>
