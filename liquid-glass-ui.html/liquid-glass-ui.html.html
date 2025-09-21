@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid Glass UI - Apple Style Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #db2777 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header with Liquid Glass Effect */
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 24px;
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0.3) 100%);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-item {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        /* Sidebar with Liquid Glass */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            color: white;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Content Cards */
+        .content-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.3) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0.2) 100%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+
+        .card h4 {
+            color: white;
+            font-size: 20px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: 32px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .control-label {
+            color: white;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle {
+            width: 50px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle.active {
+            background: #3b82f6;
+        }
+
+        .toggle-handle {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle.active .toggle-handle {
+            transform: translateX(22px);
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: 2;
+            }
+
+            .nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">Liquid Glass UI</div>
+        <nav class="nav">
+            <a href="#" class="nav-item">Home</a>
+            <a href="#" class="nav-item">Features</a>
+            <a href="#" class="nav-item">Design</a>
+            <a href="#" class="nav-item">Settings</a>
+        </nav>
+    </header>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <div class="control-group">
+            <span class="control-label">Blur Intensity</span>
+            <input type="range" class="slider" id="blurSlider" min="0" max="40" value="20">
+        </div>
+        <div class="control-group">
+            <span class="control-label">Transparency</span>
+            <input type="range" class="slider" id="opacitySlider" min="0" max="50" value="15">
+        </div>
+        <div class="control-group">
+            <span class="control-label">Animation</span>
+            <div class="toggle active" id="animationToggle">
+                <div class="toggle-handle"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h3>Navigation</h3>
+            <div class="sidebar-item active">
+                <div class="sidebar-icon">🏠</div>
+                <span>Dashboard</span>
+            </div>
+            <div class="sidebar-item">
+                <div class="sidebar-icon">📊</div>
+                <span>Analytics</span>
+            </div>
+            <div class="sidebar-item">
+                <div class="sidebar-icon">🎨</div>
+                <span>Design</span>
+            </div>
+            <div class="sidebar-item">
+                <div class="sidebar-icon">⚙️</div>
+                <span>Settings</span>
+            </div>
+            <div class="sidebar-item">
+                <div class="sidebar-icon">👤</div>
+                <span>Profile</span>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="card">
+                <div class="card-image">🚀</div>
+                <h4>Fluid Animations</h4>
+                <p>Experience smooth, physics-based animations that respond to your interactions with natural motion and delightful transitions.</p>
+            </div>
+            <div class="card">
+                <div class="card-image">🎯</div>
+                <h4>Adaptive Design</h4>
+                <p>Interfaces that automatically adapt to different contexts, lighting conditions, and content types while maintaining visual harmony.</p>
+            </div>
+            <div class="card">
+                <div class="card-image">✨</div>
+                <h4>Dynamic Materials</h4>
+                <p>Glass-like materials that shift and change based on content, creating depth and hierarchy while maintaining clarity.</p>
+            </div>
+            <div class="card">
+                <div class="card-image">🔮</div>
+                <h4>Smart Interactions</h4>
+                <p>Intelligent UI elements that anticipate user needs and provide contextual feedback with subtle visual cues.</p>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="fab">+</div>
+
+<script>
+    // Interactive controls
+    const blurSlider = document.getElementById('blurSlider');
+    const opacitySlider = document.getElementById('opacitySlider');
+    const animationToggle = document.getElementById('animationToggle');
+    const cards = document.querySelectorAll('.card');
+    const sidebar = document.querySelector('.sidebar');
+    const header = document.querySelector('.header');
+
+    // Update blur effect
+    blurSlider.addEventListener('input', (e) => {
+        const blurValue = `${e.target.value}px`;
+        document.querySelectorAll('.card, .sidebar, .header, .control-panel').forEach(el => {
+            el.style.backdropFilter = `blur(${blurValue}) saturate(180%)`;
+        });
+    });
+
+    // Update opacity
+    opacitySlider.addEventListener('input', (e) => {
+        const opacityValue = e.target.value / 100;
+        document.querySelectorAll('.card').forEach(el => {
+            el.style.background = `rgba(255, 255, 255, ${opacityValue})`;
+        });
+        sidebar.style.background = `rgba(255, 255, 255, ${opacityValue})`;
+        header.style.background = `rgba(255, 255, 255, ${opacityValue})`;
+        document.querySelector('.control-panel').style.background = `rgba(255, 255, 255, ${opacityValue})`;
+    });
+
+    // Toggle animations
+    animationToggle.addEventListener('click', () => {
+        animationToggle.classList.toggle('active');
+        if (animationToggle.classList.contains('active')) {
+            cards.forEach(card => {
+                card.style.animation = 'float 6s ease-in-out infinite';
+            });
+        } else {
+            cards.forEach(card => {
+                card.style.animation = 'none';
+            });
+        }
+    });
+
+    // Sidebar interactions
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+
+    // Add floating animation to cards
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.2}s`;
+    });
+
+    // FAB click effect
+    document.querySelector('.fab').addEventListener('click', function() {
+        this.style.transform = 'scale(0.9) rotate(180deg)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1) rotate(0deg)';
+        }, 200);
+    });
+</script>
+</body>
+</html>
