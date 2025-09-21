@@ -19,4 +19,3 @@ Zero boiler-plate, zero build steps—just open and watch.
 
 ## Visual map
 ![repo-map](markmap.svg)
-<img src="markmap.svg" width="800" alt="Vibe Coding Mind Map">
