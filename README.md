@@ -19,3 +19,4 @@ Zero boiler-plate, zero build steps—just open and watch.
 
 ## Visual map
 ![repo-map](markmap.svg)
+<img src="markmap.svg" width="100%" alt="repo map"/>
